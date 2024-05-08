@@ -43,17 +43,31 @@ const Item = ({ title, to, icon, selected, setSelected }) => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const token = localStorage.getItem('token'); // Get token from local storage or however it's stored
+       // Get token from local storage or however it's stored
       try {
+        const token = localStorage.getItem('token');
         const response = await axios.get('/tokenIsValid', { headers: { Authorization: `Bearer ${token}` } });
         if (response.data) {
           setUser({ name: response.data.user.name, profile_picture: response.data.user.profile_picture });
           console.log(user.name)
 
         }
+        if (response.status === 500) {
+          console.log('response',response.status)
+          try {
+            const newToken = await refreshToken();
+            axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
+            const response = await axios.get('/tokenIsValid', { headers: { Authorization: `Bearer ${newToken}` } });
+            setUser({ name: response.data.user.name, profile_picture: response.data.user.profile_picture });
+            console.log(user)
+          } catch (refreshError) {
+            console.error('Error after refreshing token', refreshError);
+          }
+
+        }
 
       } catch (error) {
-        if (error.response && error.response.status === 500) {
+        if (error.response || error.response.status === 500 || error.response.status === 401) {
           try {
             const newToken = await refreshToken();
             axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;

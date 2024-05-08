@@ -11,7 +11,7 @@ import { io } from 'socket.io-client';
 import {AuthContext} from "./AuthContext";
 const baseUrl = process.env.BASE_URL;
 
-const socket = io(``);
+const socket = io(window.location.origin);
 
 const QRCode = ({ qrCode }) => (
   <div>
@@ -59,32 +59,33 @@ const Login2 = () => {
   };
 
   useEffect(() => {
-    console.log(`${baseUrl}/signin`);
     axios.get(`/generate_qr`)
-      .then(response => {
-        const { qr_code, session_id } = response.data;
+        .then(response => {
+          const { qr_code, session_id } = response.data;
 
-        setQrCode(qr_code);
-        console.log('Session ID:', session_id); // Log session ID for debugging
+          setQrCode(qr_code);
+          console.log('Session ID:', session_id); // Log session ID for debugging
 
-        socket.on('authenticated', data => {
-          console.log('Authenticated event received:', data); // Log 'authenticated' event data for debugging
+          const handleAuthentication = (data) => {
+            if (data.session_id === session_id) {
+              console.log('Authenticated!');
+              setToken(data.user_id);
+              localStorage.setItem('token', data.user_id);
+              localStorage.setItem('refreshToken',data.refresh_token)
+              navigate('/Pricing');// Assuming you are receiving a token and you have a setToken method available
+            }
+          };
 
-          if (data.session_id === session_id) {
-            console.log('Authenticated!');
-          }
-        });
-
-        // Emit 'join' event with session ID
-        socket.emit('join', { session_id });
-      })
-      .catch(error => console.error('Error fetching QR code:', error));
+          socket.on('authenticated', handleAuthentication);
+        })
+        .catch(error => console.error('Error fetching QR code:', error));
 
     // Clean up socket.io listeners
     return () => {
       socket.off('authenticated');
     };
-  }, []);
+  }, [navigate, setToken]); // Add navigate to the dependency array to ensure it doesn't cause re-render issues
+
 
   return (
     <PageContainer title="Login" description="this is Login page">

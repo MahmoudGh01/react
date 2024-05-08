@@ -36,9 +36,12 @@ export default function Payment() {
   return (
     <div className="App">
       {clientSecret && (
-        <Elements options={options} stripe={stripePromise}>
-          <CheckoutForm />
-        </Elements>
+          <div style={{display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh'}}>
+            <Elements options={options} stripe={stripePromise}>
+              <CheckoutForm/>
+            </Elements>
+          </div>
+
       )}
     </div>
   );
